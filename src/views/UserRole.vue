@@ -1,0 +1,222 @@
+<template>
+    <div id="page-top">
+        <!-- Page Wrapper -->
+        <div id="wrapper">
+            <!-- Sidebar -->
+               <Sidebar navStatus="userrole"/>
+            <!-- End of Sidebar -->
+
+             <!-- Content Wrapper -->
+            <div id="content-wrapper" class="d-flex flex-column">
+
+                <!-- Main Content -->
+                <div id="content">
+
+                    <!-- Topbar -->
+                    <Header />
+                    <!-- End of Topbar -->
+
+                    <!-- Begin Page Content -->
+                    <div class="container-fluid">
+
+                         <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800">User Role List</h1>
+
+                        <router-link to="/adduserrole" class="btn btn-info btn-icon-split">
+                            <span class="icon text-white-50">
+                                <i class="fas fa-plus"></i>
+                            </span>
+                            <span class="text">Add New User Role</span>
+                        </router-link>
+                       
+                    </div>
+
+                   
+
+
+
+                
+
+                    <hr class="sidebar-divider d-none d-md-block">
+                    <!-----Tabel-->
+
+                       
+                        <table class="rwd-table shadow ">
+                            <tbody>
+                            <tr>
+                                <th>ID</th>
+                                <th>Role Name</th>
+                                <th>Action</th>
+                                
+                            </tr>
+                            <template v-for="cdata in roleData" >
+                                <tr v-if="cdata.id">
+                                    <td data-th="Supplier Code">
+                                        {{cdata.id}}                                    
+                                    </td>
+                                    <td data-th="Supplier Name">
+                                        {{cdata.role_name}}
+                                    </td>
+                                  
+                                    <td data-th="Due Date">
+                                        <router-link :to="'/edituserrole/'+cdata.id" class="btn btn-primary btn-icon-split">
+                                            <span class="icon text-white-50">
+                                                <i class="fas fa-edit"></i>
+                                            </span>
+                                            <span class="text">Edit</span>
+                                        </router-link>
+                                        &nbsp;
+                                        <button @click="deleteRole(cdata.id)" class="btn btn-danger btn-icon-split">
+                                            <span class="icon text-white-50">
+                                                <i class="fas fa-trash"></i>
+                                            </span>
+                                            <span class="text">Delete</span>
+                                        </button>
+                                        
+                                        
+
+                                    </td>
+                                
+                                </tr>
+                            </template>
+                            
+                           
+                            </tbody>
+                        </table>
+                    <!---Tabel-->
+                    <pagination class="mt-10" v-model="page2" :records="totalCount" :per-page="perPage" />
+                    <hr class="sidebar-divider d-none d-md-block">
+
+
+                    </div>
+                    <!-- /.container-fluid -->
+
+                </div>
+                <!-- End of Main Content -->
+
+                <!-- Footer -->
+                <Footer />
+                <!-- End of Footer -->
+            </div>
+            <!-- End of Content Wrapper -->
+        </div>
+        <!-- End of Page Wrapper -->
+
+    </div>
+</template>
+
+<script>
+import axios from "axios";
+import $ from "jquery";
+import Header from '../components/Header.vue'
+import Sidebar from '../components/Sidebar.vue'
+import Footer from '../components/Footer.vue'
+import Pagination from 'vue-pagination-2'
+
+export default {
+    components: {
+        Header,
+        Sidebar,
+        Footer,
+        Pagination,
+    },
+    // props: ["isHas"],
+    data() {
+        return {
+            roleData:[],
+            
+            page2: 1,
+            totalCount: 0,
+            newAry: [],
+            perPage: 5,
+            newAry:[],
+
+            user_token: localStorage.getItem("user_token"),
+            user_token_name: localStorage.getItem("user_token_name"),
+
+        };
+    },
+    mounted() {
+        if(localStorage.getItem("user_token")=='' || !localStorage.getItem("user_token")>0){
+            this.$router.push('/login')
+        }
+        this.getAllUserRole();
+         
+    },
+    watch: {
+        page2: function (vl) {
+            this.changePage()
+        },
+        roleData: function (vl){
+            this.roleData=vl;
+        }
+    },
+    methods: {
+       
+        getAllUserRole(){
+            var ev=this;
+              
+                axios({
+                    method: 'POST',
+                    url: this.$root.URL_ROOT + 'inventory_api.php',
+                    data: {
+                        type: 'getAllUserRole', 
+                    }
+                }).then(function(response) {
+                    var data = response.data;
+                    console.log(data)
+                    if(data.status=='success'){
+                        ev.roleData=data.data;
+                        ev.newAry=data.data;
+                        ev.totalCount = data.count
+                        ev.changePage()
+                    }else{
+                        //ev.$toasted.global.error({ message: data.msg });
+                    }
+                    
+                })
+        },    
+        changePage() {
+           
+            this.roletData = []
+            const preCount = (this.perPage * this.page2)
+            const temp = this.perPage
+            let newPP = (preCount) - temp
+            for (let i = 0; i < temp; i++) {
+                if (this.newAry[newPP]) {
+                    this.roleData[i] = this.newAry[newPP]
+                    newPP++
+                }
+            }
+        }, 
+        deleteRole(rid){
+            var ev=this;
+            axios({
+                    method: 'POST',
+                    url: this.$root.URL_ROOT + 'inventory_api.php',
+                    data: {
+                        type: 'deleteRole', 
+                        rid: rid
+                    }
+                }).then(function(response) {
+                    var data=response.data;
+                    //console.log(data)
+                   
+                    if(data.status=='success'){
+                        ev.roleData=[];
+                        ev.$toasted.global.success({message:data.msg});
+                        ev.getAllUserRole();
+
+                    }else{
+                        ev.$toasted.global.error({message:data.msg});
+                    }
+                    
+                })
+
+        },
+
+        
+    },
+};
+</script>
